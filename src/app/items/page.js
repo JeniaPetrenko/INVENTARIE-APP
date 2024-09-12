@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ItemsPage() {
   const [items, setItems] = useState([]);
@@ -12,23 +13,25 @@ export default function ItemsPage() {
     category: "default",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [username, setUsername] = useState(""); // Стан для імені користувача
+  const router = useRouter();
 
   // Функція для отримання товарів
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token"); // або sessionStorage
+      const token = localStorage.getItem("token");
       const response = await fetch("/api/items", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Додаємо токен в заголовок
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        setItems(data); // Тут немає поля `data.items`, бо ви передаєте масив товарів
+        setItems(data);
       } else {
         console.error("Failed to fetch items:", response.status);
       }
@@ -39,7 +42,30 @@ export default function ItemsPage() {
     }
   };
 
-  // Додавання нового товару
+  // Функція для отримання імені користувача
+  const fetchUsername = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsername(data.username); // Зберігаємо ім'я користувача у стані
+      } else {
+        console.error("Failed to fetch username:", response.status);
+      }
+    } catch (error) {
+      console.error("Failed to fetch username:", error);
+    }
+  };
+
+  // Функція для додавання нового товару
   const handleAddItem = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -72,7 +98,7 @@ export default function ItemsPage() {
     }
   };
 
-  // Видалення товару
+  // Функція для видалення товару
   const handleDeleteItem = async (id) => {
     setIsLoading(true);
     try {
@@ -97,7 +123,7 @@ export default function ItemsPage() {
     }
   };
 
-  // Редагування товару
+  // Функція для редагування товару
   const handleEditItem = (item) => {
     setEditingItem(item.id);
     setEditedItem({
@@ -138,14 +164,32 @@ export default function ItemsPage() {
     setEditingItem(null); // Закриваємо форму редагування
   };
 
+  // Функція для виходу з системи
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Видаляємо токен
+    router.push("/"); // Перенаправляємо на домашню сторінку
+  };
+
   useEffect(() => {
     fetchItems(); // Завантажуємо список товарів при завантаженні компонента
+    fetchUsername(); // Завантажуємо ім'я користувача при завантаженні компонента
   }, []);
 
   return (
     <main className="flex flex-col items-center p-4 bg-gray-100">
       <div className="w-full max-w-6xl p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Items</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Items</h1>
+          <div className="flex items-center space-x-4">
+            <span className="font-medium">Welcome, {username}</span>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-red-500 text-white font-bold rounded-md hover:bg-red-600"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
 
         {/* Форма для додавання нового товару */}
         <form onSubmit={handleAddItem} className="mb-6">
@@ -228,7 +272,7 @@ export default function ItemsPage() {
                         onChange={(e) =>
                           setEditedItem({
                             ...editedItem,
-                            quantity: parseInt(e.target.value),
+                            quantity: parseInt(e.target.value, 10),
                           })
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
