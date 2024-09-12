@@ -39,7 +39,7 @@ export async function POST(req) {
     // Генеруйте JWT токен
     const token = await new SignJWT({ userId: user.id })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setExpirationTime("1h")
+      .setExpirationTime("2h")
       .sign(new TextEncoder().encode(SECRET_KEY));
 
     return NextResponse.json({ user, token });
