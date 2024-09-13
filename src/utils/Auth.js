@@ -1,9 +1,34 @@
-// src/utils/auth.js
-import { jwtVerify } from "jose";
+// src/utils/Auth.js
+import * as jose from "jose";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const SECRET_KEY = process.env.JWT_SECRET || "your_default_secret_key"; // Задайте ваш секретний ключ
+const JWT_SECRET = process.env.JWT_SECRET || "your_secret_key";
+const JWT_EXPIRATION = process.env.JWT_EXPIRATION || "1y";
+
+function encodedSecret() {
+  return new TextEncoder().encode(JWT_SECRET);
+}
+
+export async function signJWT(payload) {
+  const token = await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setIssuedAt()
+    .setExpirationTime(JWT_EXPIRATION)
+    .sign(encodedSecret());
+
+  return token;
+}
+
+export async function verifyJWT(token) {
+  try {
+    const { payload } = await jose.jwtVerify(token, encodedSecret());
+    return payload;
+  } catch (error) {
+    console.error("Token verification failed:", error);
+    throw new Error("Token verification failed");
+  }
+}
 
 export async function verifyToken(req) {
   const authHeader = req.headers.get("Authorization");
@@ -19,10 +44,7 @@ export async function verifyToken(req) {
   }
 
   try {
-    const { payload } = await jwtVerify(
-      token,
-      new TextEncoder().encode(SECRET_KEY)
-    );
+    const payload = await verifyJWT(token);
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
     });
