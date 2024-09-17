@@ -20,31 +20,19 @@ export async function signJWT(payload) {
   return token;
 }
 
-export async function verifyJWT(token) {
-  try {
-    const { payload } = await jose.jwtVerify(token, encodedSecret());
-    return payload;
-  } catch (error) {
-    console.error("Token verification failed:", error);
-    throw new Error("Token verification failed");
-  }
-}
-
 export async function verifyToken(req) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    console.log("No Authorization header");
     return null;
   }
 
   const token = authHeader.split(" ")[1];
   if (!token) {
-    console.log("No token found");
     return null;
   }
 
   try {
-    const payload = await verifyJWT(token);
+    const { payload } = await jose.jwtVerify(token, encodedSecret());
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
     });
