@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "@/utils/Auth";
 import { PrismaClient } from "@prisma/client";
+import { validateUserData } from "@/utils/apiUsers";
 
 const prisma = new PrismaClient();
 

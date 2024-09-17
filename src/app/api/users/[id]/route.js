@@ -3,94 +3,65 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "@/utils/Auth"; // Використовуємо для перевірки токену
 import { PrismaClient } from "@prisma/client";
+import {
+  objectErrorResponse,
+  validateJSONData,
+  validateUserData,
+} from "@/utils/apiUsers";
 
 const prisma = new PrismaClient();
 
 // Отримання користувача за його ID
-export async function GET(req, { params }) {
-  const user = await verifyToken(req); // Перевіряємо токен
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { id } = params; // Отримуємо ID з URL
+export async function GET(req, options) {
+  const id = await options.params.id;
 
   try {
     // Знаходимо користувача за ID
-    const foundUser = await prisma.user.findUnique({
-      where: { id: parseInt(id) },
+    const user = await prisma.user.findUniqueThrow({
+      where: { id: Number(id) },
     });
-
-    if (!foundUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    return NextResponse.json(foundUser, { status: 200 });
+    return NextResponse.json(user);
   } catch (error) {
     console.error("Failed to fetch user:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch user" },
-      { status: 500 }
-    );
+    return objectErrorResponse(NextResponse, "User");
   }
 }
 
 // Оновлення користувача за його ID
-export async function PUT(req, { params }) {
-  const user = await verifyToken(req); // Перевіряємо токен
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function PUT(req, options) {
+  const id = await options.params.id;
+  const [bodyHasErrors, body] = await validateJSONData(req);
+  if (!bodyHasErrors) {
+    return NextResponse.json({ message: "valid json object" }, { status: 400 });
+  }
+  const [hasErrors, errors] = await validateUserData(body);
+  if (hasErrors) {
+    return NextResponse.json({ message: errors }, { status: 400 });
   }
 
-  const { id } = params; // Отримуємо ID користувача з URL
-  const { name, email, role } = await req.json(); // Отримуємо дані з тіла запиту
-
   try {
-    // Оновлюємо користувача в базі даних
-    const updatedUser = await prisma.user.update({
-      where: { id: parseInt(id) }, // Знаходимо користувача за ID
+    const updateUser = await prisma.user.update({
+      where: { id: Number(id) },
       data: {
-        name,
-        email,
-        role, // Оновлюємо поля користувача
+        name: body.name,
+        email: body.email,
+        password: body.password,
       },
     });
-
-    return NextResponse.json(updatedUser, { status: 200 });
+    return NextResponse.json(updateUser);
   } catch (error) {
-    console.error("Failed to update user:", error);
-    return NextResponse.json(
-      { error: "Failed to update user" },
-      { status: 500 }
-    );
+    console.error("Failed to fetch user:", error);
+    return objectErrorResponse(NextResponse, "User");
   }
 }
 
 export async function DELETE(req, { params }) {
-  const user = await verifyToken(req); // Перевірка токена
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { id } = params; // Отримання ID користувача з URL
+  const id = options.params.id;
 
   try {
-    // Видалення користувача з бази даних
-    await prisma.user.delete({
-      where: { id: parseInt(id) },
-    });
-
-    return NextResponse.json(
-      { message: "User deleted successfully" },
-      { status: 200 }
-    );
+    await prisma.user.delete({ where: { id: Number(id) } });
+    return new Response.json(null, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to delete user" },
-      { status: 500 }
-    );
+    return objectErrorResponse(NextResponse, "User");
   }
 }
