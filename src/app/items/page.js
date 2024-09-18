@@ -1,342 +1,209 @@
 // src/app/items/page.js - list of items and form for editing items
-
+// app/items/page.js
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 
-export default function ItemsPage() {
+import React, { useState, useEffect } from "react";
+import ItemCard from "@/components/ItemCard";
+import ItemForm from "@/components/ItemForm";
+
+export default function itemsList() {
   const [items, setItems] = useState([]);
-  const [newItem, setNewItem] = useState("");
-  const [editingItem, setEditingItem] = useState(null);
-  const [editedItem, setEditedItem] = useState({
-    name: "",
-    description: "",
-    quantity: 1,
-    category: "default",
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [username, setUsername] = useState(""); // Стан для імені користувача
-  const router = useRouter();
-
-  // Функція для отримання товарів
-  const fetchItems = async () => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/items", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setItems(data);
-      } else {
-        console.error("Failed to fetch items:", response.status);
-      }
-    } catch (error) {
-      console.error("Failed to fetch items:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Функція для отримання імені користувача
-  const fetchUsername = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/user", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUsername(data.username); // Зберігаємо ім'я користувача у стані
-      } else {
-        console.error("Failed to fetch username:", response.status);
-      }
-    } catch (error) {
-      console.error("Failed to fetch username:", error);
-    }
-  };
-
-  // Функція для додавання нового товару
-  const handleAddItem = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("/api/items", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: newItem,
-          description: "", // Опис (опціональне)
-          quantity: 1, // Кількість (мінімум 1)
-          category: "default", // Категорія (опціонально)
-        }),
-      });
-
-      if (response.ok) {
-        setNewItem(""); // Очищуємо поле введення
-        fetchItems(); // Оновлюємо список після додавання товару
-      } else {
-        console.error("Failed to add item:", response.status);
-      }
-    } catch (error) {
-      console.error("Failed to add item:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Функція для видалення товару
-  const handleDeleteItem = async (id) => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/items/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        fetchItems(); // Оновлюємо список після видалення товару
-      } else {
-        console.error("Failed to delete item:", response.status);
-      }
-    } catch (error) {
-      console.error("Failed to delete item:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Функція для редагування товару
-  const handleEditItem = (item) => {
-    setEditingItem(item.id);
-    setEditedItem({
-      name: item.name,
-      description: item.description || "",
-      quantity: item.quantity,
-      category: item.category || "default",
-    });
-  };
-
-  const handleSaveItem = async (id) => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/items/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(editedItem),
-      });
-
-      if (response.ok) {
-        setEditingItem(null); // Закриваємо форму редагування
-        fetchItems(); // Оновлюємо список після редагування товару
-      } else {
-        console.error("Failed to edit item:", response.status);
-      }
-    } catch (error) {
-      console.error("Failed to edit item:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingItem(null); // Закриваємо форму редагування
-  };
-
-  // Функція для виходу з системи
-  const handleLogout = () => {
-    localStorage.removeItem("token"); // Видаляємо токен
-    router.push("/"); // Перенаправляємо на домашню сторінку
-  };
 
   useEffect(() => {
-    fetchItems(); // Завантажуємо список товарів при завантаженні компонента
-    fetchUsername(); // Завантажуємо ім'я користувача при завантаженні компонента
+    const fetchItems = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/items");
+        const itemsData = await response.json();
+        setItems(itemsData);
+      } catch (error) {
+        console.log("failed to fetch items", error);
+      }
+    };
+
+    fetchItems();
   }, []);
 
+  const handleEdit = async (updatedItem) => {
+    const _token = localStorage.getItem("@token");
+    if (!_token) {
+      console.error("No token found.");
+      alert("You need to be logged.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/items/${updatedItem.id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedItem),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage =
+          errorData.message || `failed to edit the item: ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      // Отримуємо оновлений список товарів
+      const updatedItemsResponse = await fetch(
+        "http://localhost:3000/api/items",
+        {
+          headers: {
+            Authorization: `Bearer ${_token}`,
+          },
+        }
+      );
+
+      if (!updatedItemsResponse.ok) {
+        throw new Error("faile to get updated items");
+      }
+
+      const updatedItems = await updatedItemsResponse.json();
+      setItems(updatedItems);
+
+      alert("The item succesfully updated!");
+    } catch (error) {
+      console.error("Error to update item:", error);
+      alert(error.message || "Error to update item");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const _token = localStorage.getItem("@token");
+    if (!_token) {
+      console.error("Token not found.");
+      alert("You need to be login.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/items/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete the item: ${response.status}`);
+      }
+
+      // Отримання оновленого списку товарів після успішного видалення
+      const updatedItemsResponse = await fetch(
+        "http://localhost:3000/api/items",
+        {
+          headers: {
+            Authorization: `Bearer ${_token}`,
+          },
+        }
+      );
+
+      if (!updatedItemsResponse.ok) {
+        throw new Error("Failed to get the updated list items");
+      }
+
+      const updatedItems = await updatedItemsResponse.json();
+      setItems(updatedItems);
+
+      alert("The item is deleted!");
+    } catch (error) {
+      console.error("error:", error);
+      alert(error.message || "An error occurred");
+    }
+  };
+
+  const handleAdd = async (newItem) => {
+    const _token = localStorage.getItem("@token");
+    if (!_token) {
+      console.error("Токен не знайдено.");
+      alert("Будь ласка, увійдіть в систему для додавання товару.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3000/api/items", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newItem),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `Failed to add the item: ${response.status}`
+        );
+      }
+
+      const addedItem = await response.json();
+      console.log("The item is added:", addedItem);
+
+      // Оптимістичне оновлення UI
+      setItems((prevItems) => [...prevItems, addedItem]);
+
+      // Отримання оновленого списку товарів
+      const updatedItemsResponse = await fetch(
+        "http://localhost:3000/api/items",
+        {
+          headers: {
+            Authorization: `Bearer ${_token}`,
+          },
+        }
+      );
+
+      if (!updatedItemsResponse.ok) {
+        throw new Error("to get updated items list failed");
+      }
+
+      const updatedItems = await updatedItemsResponse.json();
+      setItems(updatedItems);
+
+      alert("The item is added!");
+    } catch (error) {
+      console.error("An error occurred:", error);
+      alert(error.message || "An error occurred");
+    }
+  };
+
   return (
-    <main className="flex flex-col items-center p-4 bg-gray-100">
-      <div className="w-full max-w-6xl p-8 bg-white rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Items</h1>
-          <div className="flex items-center space-x-4">
-            <span className="font-medium">Welcome, {username}</span>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white font-bold rounded-md hover:bg-red-600"
-            >
-              Logout
-            </button>
-          </div>
+    <main className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-extrabold text-gray-900 text-center mb-10">
+          Items List
+        </h1>
+
+        <div className="bg-white shadow-md rounded-lg p-6 mb-10">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Add New Item
+          </h2>
+          <ItemForm onAdd={handleAdd} />
         </div>
 
-        {/* Форма для додавання нового товару */}
-        <form onSubmit={handleAddItem} className="mb-6">
-          <input
-            type="text"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            placeholder="Add new item"
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="mt-2 w-full py-2 px-4 bg-indigo-600 text-white font-bold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {isLoading ? "Adding..." : "Add Item"}
-          </button>
-        </form>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">List of Items</h2>
 
-        {/* Відображення списку товарів */}
         {items.length === 0 ? (
-          <p className="text-center">No items found</p>
+          <p className="text-center text-gray-600">Add new Item.</p>
         ) : (
-          <table className="w-full border-collapse border border-gray-300">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 px-4 py-2">ID</th>
-                <th className="border border-gray-300 px-4 py-2">Name</th>
-                <th className="border border-gray-300 px-4 py-2">
-                  Description
-                </th>
-                <th className="border border-gray-300 px-4 py-2">Quantity</th>
-                <th className="border border-gray-300 px-4 py-2">Category</th>
-                <th className="border border-gray-300 px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id}>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {item.id}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {editingItem === item.id ? (
-                      <input
-                        type="text"
-                        value={editedItem.name}
-                        onChange={(e) =>
-                          setEditedItem({ ...editedItem, name: e.target.value })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                      />
-                    ) : (
-                      item.name
-                    )}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {editingItem === item.id ? (
-                      <input
-                        type="text"
-                        value={editedItem.description}
-                        onChange={(e) =>
-                          setEditedItem({
-                            ...editedItem,
-                            description: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                      />
-                    ) : (
-                      item.description || "N/A"
-                    )}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {editingItem === item.id ? (
-                      <input
-                        type="number"
-                        value={editedItem.quantity}
-                        onChange={(e) =>
-                          setEditedItem({
-                            ...editedItem,
-                            quantity: parseInt(e.target.value, 10),
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                      />
-                    ) : (
-                      item.quantity
-                    )}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {editingItem === item.id ? (
-                      <input
-                        type="text"
-                        value={editedItem.category}
-                        onChange={(e) =>
-                          setEditedItem({
-                            ...editedItem,
-                            category: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-                      />
-                    ) : (
-                      item.category || "N/A"
-                    )}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {editingItem === item.id ? (
-                      <>
-                        <button
-                          onClick={() => handleSaveItem(item.id)}
-                          className="mr-2 px-3 py-1 bg-green-500 text-white rounded"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="px-3 py-1 bg-gray-500 text-white rounded"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleEditItem(item)}
-                          className="mr-2 px-3 py-1 bg-yellow-500 text-white rounded"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteItem(item.id)}
-                          className="px-3 py-1 bg-red-500 text-white rounded"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {items.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onDelete={() => handleDelete(item.id)}
+                onEdit={handleEdit}
+              />
+            ))}
+          </div>
         )}
       </div>
     </main>
