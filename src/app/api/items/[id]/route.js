@@ -1,66 +1,94 @@
 // src/app/api/items/[id]/route.js
+
 import { NextResponse } from "next/server";
-import { verifyToken } from "@/utils/Auth";
 import { PrismaClient } from "@prisma/client";
+import { object404Response, validateItemData } from "@/utils/apiHelpers";
 
 const prisma = new PrismaClient();
 
-export async function PUT(req, { params }) {
-  const user = await verifyToken(req); // Перевіряємо токен
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const itemId = params.id; // Отримуємо ID товару з URL
-  const data = await req.json(); // Отримуємо дані для оновлення
+//get request
+export async function GET(req, options) {
+  const itemId = options.params.id;
 
   try {
-    // Перевіряємо, чи існує товар і чи належить він авторизованому користувачу
     const item = await prisma.item.findUnique({
-      where: { id: itemId },
+      where: {
+        id: Number(itemId),
+      },
     });
 
-    if (!item || item.userId !== user.id) {
-      return NextResponse.json(
-        { error: "Item not found or not authorized" },
-        { status: 403 }
-      );
+    if (!item) {
+      return NextResponse.json({ message: "Item not found" }, { status: 404 });
     }
 
-    const updatedItem = await prisma.item.update({
-      where: { id: itemId },
-      data: { ...data },
-    });
-
-    return NextResponse.json(updatedItem, { status: 200 });
+    return NextResponse.json(item);
   } catch (error) {
-    console.error("Failed to update item:", error);
+    console.error("Error fetching item:", error);
     return NextResponse.json(
-      { error: "Failed to update item" },
+      { message: "An error occurred while fetching the item" },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(req, { params }) {
-  const user = await verifyToken(req);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//put request
+export async function PUT(req, options) {
+  const itemId = options.params.id; // Отримуємо ID товару з URL
+  let body;
+  try {
+    body = await req.json(); // Парсимо JSON запиту
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message: "A valid Json object has to be sent",
+      },
+      {
+        status: 400,
+      }
+    );
   }
 
-  const { id } = params;
+  const [hasErrors, errors] = validateItemData(body);
+  if (hasErrors) {
+    return NextResponse.json({ message: errors }, { status: 400 });
+  }
+  try {
+    const updateItem = await prisma.item.update({
+      where: { id: Number(itemId) },
+      data: {
+        name: body.name,
+        description: body.description,
+        quantity: body.quantity,
+        category: body.category,
+      },
+    });
+    return NextResponse.json(updateItem);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message: "failed to update item",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
+
+//delete request
+export async function DELETE(req, options) {
+  const id = options.params.id;
 
   try {
     await prisma.item.delete({
-      where: { id: parseInt(id) },
+      where: {
+        id: Number(id),
+      },
     });
-    return NextResponse.json({ message: "Item deleted" }, { status: 200 });
+    return new Response(null, {
+      status: 204,
+    });
   } catch (error) {
-    console.error("Failed to delete item:", error);
-    return NextResponse.json(
-      { error: "Failed to delete item" },
-      { status: 500 }
-    );
+    return object404Response(NextResponse, "Item");
   }
 }

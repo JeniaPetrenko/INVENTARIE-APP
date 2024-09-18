@@ -1,3 +1,1 @@
-//component for displaying the item
-
-"use client";
+// components/ItemCard.js - show one item to edit="flex gap-2">

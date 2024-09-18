@@ -1,3 +1,5 @@
+// src/app/items/page.js - list of items and form for editing items
+
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";

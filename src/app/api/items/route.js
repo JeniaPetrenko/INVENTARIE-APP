@@ -1,51 +1,82 @@
 // src/app/api/items/route.js
 import { NextResponse } from "next/server";
-import { verifyToken } from "@/utils/Auth";
 import { PrismaClient } from "@prisma/client";
-import { validateUserData } from "@/utils/apiUsers";
+import { validateItemData } from "@/utils/apiHelpers";
 
 const prisma = new PrismaClient();
 
 export async function GET(req) {
-  try {
-    // Отримуємо всі товари з бази даних
-    const items = await prisma.item.findMany();
-    return NextResponse.json(items, { status: 200 });
-  } catch (error) {
-    console.error("Failed to fetch items:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch items" },
-      { status: 500 }
-    );
+  const url = new URL(req.url);
+  const search = url.searchParams.get("search");
+
+  let items = [];
+  if (search) {
+    items = await prisma.item.findMany({
+      where: {
+        name: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    });
+  } else {
+    items = await prisma.item.findMany();
   }
+  return NextResponse.json(items);
 }
 
 export async function POST(req) {
-  const user = await verifyToken(req); // Перевіряємо токен
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const data = await req.json(); // Отримуємо дані з запиту
-  const { name, description, quantity, category } = data;
-
+  let body;
   try {
-    const newItem = await prisma.item.create({
-      data: {
-        name,
-        description,
-        quantity,
-        category,
-        userId: user.id, // Прив'язуємо товар до користувача
-      },
-    });
-
-    return NextResponse.json(newItem, { status: 201 });
+    body = await req.json();
   } catch (error) {
-    console.error("Failed to create item:", error);
     return NextResponse.json(
-      { error: "Failed to create item" },
-      { status: 500 }
+      {
+        message: "A valid JSON object has to be sent",
+      },
+      {
+        status: 400,
+      }
     );
   }
+
+  const [hasErrors, errors] = validateItemData(body);
+  if (hasErrors) {
+    return NextResponse.json(
+      {
+        message: "Validation failed",
+        errors,
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  let newItem;
+  try {
+    newItem = await prisma.item.create({
+      data: {
+        name: body.name,
+        description: body.description,
+        quantity: body.quantity,
+        category: body.category,
+        userId: body.userId, // Додайте це поле
+      },
+    });
+  } catch (error) {
+    console.log("error: ", error.message);
+    return NextResponse.json(
+      {
+        message: "Invlid data sent for item creation",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  return NextResponse.json(newItem, {
+    status: 201,
+  });
 }

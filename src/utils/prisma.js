@@ -1,5 +1,5 @@
 //itialisation of client prisma
-// src/app/api/items/route.js
+// src/utils/prisma.js
 import { prisma } from "@/utils/prisma"; // або де у вас зберігається екземпляр Prisma
 
 export async function POST(request) {

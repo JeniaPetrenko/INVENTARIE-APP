@@ -1,26 +1,19 @@
 //app/api/register/rout.js
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { SignJWT } from "jose";
+import { signJWT } from "@/utils/authHelpers";
 
 const prisma = new PrismaClient();
-const SECRET_KEY = process.env.JWT_SECRET || "your_default_secret_key";
 
 export async function POST(req) {
   let body;
   try {
     body = await req.json();
     if (!body.email || !body.password || !body.name) {
-      return NextResponse.json(
-        { message: "A valid email, password, and name must be provided" },
-        { status: 400 }
-      );
+      throw new Error("Email, password, and name are required");
     }
   } catch (error) {
-    return NextResponse.json(
-      { message: "Invalid request format" },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: error.message }, { status: 400 });
   }
 
   try {
@@ -39,19 +32,27 @@ export async function POST(req) {
     const user = await prisma.user.create({
       data: {
         email: body.email,
-        password: body.password, // Залиште без хешування для простоти
+        password: body.password, // Примітка: рекомендується хешувати пароль
         name: body.name,
       },
     });
 
     // Генеруйте JWT токен
-    const token = await new SignJWT({ userId: user.id })
-      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setExpirationTime("1h")
-      .sign(new TextEncoder().encode(SECRET_KEY));
+    const token = await signJWT({ userId: user.id });
 
-    return NextResponse.json({ user, token });
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+      token,
+    });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    console.error("Error during user registration:", error);
+    return NextResponse.json(
+      { message: "An error occurred during registration" },
+      { status: 500 }
+    );
   }
 }
