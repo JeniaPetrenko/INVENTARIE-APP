@@ -1,14 +1,18 @@
-// src/app/items/page.js
+// src/app/items/page.js - managing a litst of items,
+//fetching the items from an api, handling crud operations
 "use client";
 
+//import statements
 import React, { useState, useEffect } from "react";
 import ItemCard from "@/components/ItemCard";
 import ItemForm from "@/components/ItemForm";
-import Header from "@/components/Header"; // Імпортуємо Header
+import Header from "@/components/Header";
 
+//components definition
 export default function ItemsList() {
   const [items, setItems] = useState([]);
 
+  //hook to fetch items from the api
   useEffect(() => {
     const fetchItems = async () => {
       try {

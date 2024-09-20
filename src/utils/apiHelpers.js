@@ -1,4 +1,4 @@
-//app/utils/apiHelpers.js
+//app/utils/apiHelpers.js - data validation and api responses
 
 export function validateItemData(data) {
   let errors = {};

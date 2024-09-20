@@ -1,4 +1,4 @@
-//context/AuthContext.js
+//context/AuthContext.js - authentication management
 
 "use client";
 
@@ -13,8 +13,9 @@ const defaultState = {
 
 const AuthContext = createContext(defaultState);
 
+// get the current state (contents of the context)
 function AuthProvider({ children }) {
-  const [token, setToken] = useState(defaultState.token);
+  const [token, setToken] = useState(defaultState.token); //save the token
 
   useEffect(() => {
     const _token = localStorage.getItem("@token");

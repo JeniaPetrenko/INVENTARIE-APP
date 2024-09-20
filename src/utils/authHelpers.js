@@ -1,4 +1,4 @@
-// src/utils/Auth.js
+// src/utils/Auth.js - creating and updating of tokens
 import * as jose from "jose";
 
 const JWT_SECRET = "SECRET";
@@ -9,6 +9,7 @@ function encodedSecret() {
 }
 
 export async function signJWT(payload) {
+  //return playload(data) if the token is valid
   const token = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setIssuedAt()

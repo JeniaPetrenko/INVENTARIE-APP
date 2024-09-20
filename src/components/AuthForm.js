@@ -1,4 +1,4 @@
-// src/components/AuthForm.js
+// src/components/AuthForm.js -  handling user authentication, allowing users to log in or register.
 
 "use client";
 
@@ -11,6 +11,7 @@ export default function AuthForm() {
   const auth = useAuth();
 
   const [formData, setFormData] = useState({
+    //hook to manage local state
     email: "",
     password: "",
     name: "",
@@ -19,6 +20,7 @@ export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
+  //to update state after user input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -44,10 +46,10 @@ export default function AuthForm() {
         router.push("/items");
       } else {
         const errorData = await response.json();
-        setError(errorData.message || "Невідома помилка");
+        setError(errorData.message || "error occurred");
       }
     } catch (error) {
-      setError("Помилка підключення до сервера");
+      setError("error");
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +58,7 @@ export default function AuthForm() {
   return (
     <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
       <h2 className="text-2xl font-bold mb-6 text-center">
-        {isLogin ? "Вхід" : "Реєстрація"}
+        {isLogin ? "Login" : "Register"}
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -72,7 +74,7 @@ export default function AuthForm() {
             type="email"
             required
             className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            placeholder="Введіть email"
+            placeholder=" email"
             value={formData.email}
             onChange={handleChange}
           />
@@ -109,7 +111,7 @@ export default function AuthForm() {
               type="text"
               required
               className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="Введіть ім'я"
+              placeholder="name"
               value={formData.name}
               onChange={handleChange}
             />

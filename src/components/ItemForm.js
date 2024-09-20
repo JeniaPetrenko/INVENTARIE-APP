@@ -1,4 +1,4 @@
-// components/ItemForm.js
+// components/ItemForm.js - form for creating a new item
 
 import React, { useState } from "react";
 
@@ -10,6 +10,7 @@ const ItemForm = ({ onAdd }) => {
     category: "",
   });
 
+  //work with updating existing items
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewItem((prev) => ({
@@ -18,6 +19,7 @@ const ItemForm = ({ onAdd }) => {
     }));
   };
 
+  //add new items
   const handleSubmit = (e) => {
     e.preventDefault();
     onAdd(newItem);
