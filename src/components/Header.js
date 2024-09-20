@@ -8,7 +8,7 @@ function Header() {
   const auth = useAuth();
 
   return (
-    <header className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
+    <header className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg mb-10">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link
           href="/"

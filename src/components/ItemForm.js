@@ -30,16 +30,16 @@ const ItemForm = ({ onAdd }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 w-72 mx-auto">
       <div>
         <input
           type="text"
           name="name"
           value={newItem.name}
           onChange={handleInputChange}
-          placeholder="Назва товару"
+          placeholder="Item Name"
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
         />
       </div>
       <div>
@@ -48,8 +48,8 @@ const ItemForm = ({ onAdd }) => {
           name="description"
           value={newItem.description}
           onChange={handleInputChange}
-          placeholder="Опис товару"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Item Description"
+          className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
         />
       </div>
       <div>
@@ -58,8 +58,8 @@ const ItemForm = ({ onAdd }) => {
           name="quantity"
           value={newItem.quantity}
           onChange={handleInputChange}
-          placeholder="Кількість"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Quantity"
+          className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
         />
       </div>
       <div>
@@ -68,15 +68,15 @@ const ItemForm = ({ onAdd }) => {
           name="category"
           value={newItem.category}
           onChange={handleInputChange}
-          placeholder="Категорія"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+          placeholder="Category"
+          className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
         />
       </div>
       <button
         type="submit"
-        className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        className="w-full px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
       >
-        Додати товар
+        Add Item
       </button>
     </form>
   );

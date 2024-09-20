@@ -1,12 +1,12 @@
-// src/app/items/page.js - list of items and form for editing items
-// app/items/page.js
+// src/app/items/page.js
 "use client";
 
 import React, { useState, useEffect } from "react";
 import ItemCard from "@/components/ItemCard";
 import ItemForm from "@/components/ItemForm";
+import Header from "@/components/Header"; // Імпортуємо Header
 
-export default function itemsList() {
+export default function ItemsList() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function itemsList() {
     const _token = localStorage.getItem("@token");
     if (!_token) {
       console.error("No token found.");
-      alert("You need to be logged.");
+      alert("You need to be logged in.");
       return;
     }
 
@@ -51,7 +51,6 @@ export default function itemsList() {
         throw new Error(errorMessage);
       }
 
-      // Отримуємо оновлений список товарів
       const updatedItemsResponse = await fetch(
         "http://localhost:3000/api/items",
         {
@@ -62,16 +61,16 @@ export default function itemsList() {
       );
 
       if (!updatedItemsResponse.ok) {
-        throw new Error("faile to get updated items");
+        throw new Error("Failed to get updated items");
       }
 
       const updatedItems = await updatedItemsResponse.json();
       setItems(updatedItems);
 
-      alert("The item succesfully updated!");
+      alert("The item was successfully updated!");
     } catch (error) {
-      console.error("Error to update item:", error);
-      alert(error.message || "Error to update item");
+      console.error("Error updating item:", error);
+      alert(error.message || "Error updating item");
     }
   };
 
@@ -79,7 +78,7 @@ export default function itemsList() {
     const _token = localStorage.getItem("@token");
     if (!_token) {
       console.error("Token not found.");
-      alert("You need to be login.");
+      alert("You need to be logged in.");
       return;
     }
 
@@ -96,7 +95,6 @@ export default function itemsList() {
         throw new Error(`Failed to delete the item: ${response.status}`);
       }
 
-      // Отримання оновленого списку товарів після успішного видалення
       const updatedItemsResponse = await fetch(
         "http://localhost:3000/api/items",
         {
@@ -107,15 +105,15 @@ export default function itemsList() {
       );
 
       if (!updatedItemsResponse.ok) {
-        throw new Error("Failed to get the updated list items");
+        throw new Error("Failed to get updated items");
       }
 
       const updatedItems = await updatedItemsResponse.json();
       setItems(updatedItems);
 
-      alert("The item is deleted!");
+      alert("The item has been deleted!");
     } catch (error) {
-      console.error("error:", error);
+      console.error("Error deleting item:", error);
       alert(error.message || "An error occurred");
     }
   };
@@ -123,8 +121,8 @@ export default function itemsList() {
   const handleAdd = async (newItem) => {
     const _token = localStorage.getItem("@token");
     if (!_token) {
-      console.error("Токен не знайдено.");
-      alert("Будь ласка, увійдіть в систему для додавання товару.");
+      console.error("Token not found.");
+      alert("Please log in to add items.");
       return;
     }
 
@@ -146,12 +144,8 @@ export default function itemsList() {
       }
 
       const addedItem = await response.json();
-      console.log("The item is added:", addedItem);
-
-      // Оптимістичне оновлення UI
       setItems((prevItems) => [...prevItems, addedItem]);
 
-      // Отримання оновленого списку товарів
       const updatedItemsResponse = await fetch(
         "http://localhost:3000/api/items",
         {
@@ -162,13 +156,13 @@ export default function itemsList() {
       );
 
       if (!updatedItemsResponse.ok) {
-        throw new Error("to get updated items list failed");
+        throw new Error("Failed to get updated items");
       }
 
       const updatedItems = await updatedItemsResponse.json();
       setItems(updatedItems);
 
-      alert("The item is added!");
+      alert("The item has been added!");
     } catch (error) {
       console.error("An error occurred:", error);
       alert(error.message || "An error occurred");
@@ -177,11 +171,9 @@ export default function itemsList() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-extrabold text-gray-900 text-center mb-10">
-          Items List
-        </h1>
+      <Header />
 
+      <div className="max-w-7xl mx-auto">
         <div className="bg-white shadow-md rounded-lg p-6 mb-10">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Add New Item
@@ -192,7 +184,9 @@ export default function itemsList() {
         <h2 className="text-2xl font-bold text-gray-800 mb-6">List of Items</h2>
 
         {items.length === 0 ? (
-          <p className="text-center text-gray-600">Add new Item.</p>
+          <p className="text-center text-gray-600">
+            No items available. Add a new item.
+          </p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {items.map((item) => (
